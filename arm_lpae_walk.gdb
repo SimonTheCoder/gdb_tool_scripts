@@ -1,4 +1,4 @@
-define page_walk
+define page_walk_lpae
 #arg0 ttbr_value , &def_ttbl for xvisor
 #arg1 va
 #test case: page_walk &def_ttbl 0x80efc000
@@ -41,4 +41,8 @@ define page_walk
       end
 
     end
+end
+document page_walk_lpae
+#arg0 ttbr_value , &def_ttbl for xvisor
+#arg1 va
 end
