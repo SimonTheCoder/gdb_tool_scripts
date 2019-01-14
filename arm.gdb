@@ -106,7 +106,7 @@ define aarch64_page_walk_lpae
     set $page_dir = (unsigned long)$arg0
     printf "page dir=%x, VA=%x\n",$page_dir,$va 
     #lv0 
-    set $lv0_pte_ptr = ($arg0 & 0xFFFFFFFFE000) + ((($va & 0xFF8000000000)>>39)<<2) 
+    set $lv0_pte_ptr = ($arg0 & 0xFFFFFFFFE000) + (($va >>39)*8) 
     set $lv0_pte = *(unsigned long *) $lv0_pte_ptr
     set $lv0_pte_type = $lv0_pte & 0x3
     printf "lv0 pagetable_dir = 0x%x,  pte_ptr = 0x%x, pte = 0x%llx type=%d(0,1:Invalid,3:Table)\n",$page_dir,$lv0_pte_ptr,$lv0_pte,$lv0_pte_type
