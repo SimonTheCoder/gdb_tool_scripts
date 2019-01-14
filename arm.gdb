@@ -48,7 +48,7 @@ define arm_run_one_op
     #use current PC as run point
     set $TEMP_MEM = $pc
     set $OP_HEX = (unsigned int)$arg1
-p /x $OP_HEX
+    
     #save current opcode
     set $save_op = *(unsigned int *)$TEMP_MEM
 
