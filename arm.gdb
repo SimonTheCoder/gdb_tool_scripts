@@ -98,7 +98,7 @@ end
 
 
 ##################################################################
-define aarch64_page_walk_lpae
+define aarch64_page_walk
 #need page table 1:1 mapped, granule size is 4KB
 #arg0 ttbr_value , &def_ttbl for xvisor
 #arg1 va
@@ -167,7 +167,7 @@ define aarch64_page_walk_lpae
 
     end
 end
-document page_walk_lpae
-#arg0 ttbr_value , &def_ttbl for xvisor
-#arg1 va
+document  aarch64_page_walk
+arg0 ttbr_value , &def_ttbl for xvisor
+arg1 va
 end
