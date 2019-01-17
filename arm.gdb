@@ -22,30 +22,24 @@ define arm_human_read_psr
         set $mode = $psr & 0xf
         if ($mode == 0x0)
             printf "User\n"
-        end
-        if ($mode == 0x1)
+        else if ($mode == 0x1)
             printf "FIQ\n"
-        end
-        if ($mode == 0x2)
+        else if ($mode == 0x2)
             printf "IRQ\n"
-        end
-        if ($mode == 0x3)
+        else if ($mode == 0x3)
             printf "Supervisor\n"
-        end
-        if ($mode == 0x6)
+        else if ($mode == 0x6)
             printf "Monitor\n"
-        end
-        if ($mode == 0x7)
+        else if ($mode == 0x7)
             printf "Abort\n"
-        end
-        if ($mode == 0xa)
+        else if ($mode == 0xa)
             printf "Hyper\n"
-        end
-        if ($mode == 0xb)
+        else if ($mode == 0xb)
             printf "Undefined\n"
-        end
-        if ($mode == 0xf)
+        else if ($mode == 0xf)
             printf "System\n"
+        else
+            printf "Unknown(0x%x)\n", $mode
         end
     end
 
