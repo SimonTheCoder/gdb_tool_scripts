@@ -1,3 +1,93 @@
+define arm_human_read_psr
+    set $psr = $arg0
+    set $is_aarch32 = 0
+    if ( $psr & (1<<4)) 
+        printf "AARCH32 "
+        set $is_aarch32 = 1
+    else
+        printf "AARCH64 "
+    end
+    
+
+    if ($is_aarch32 !=1)
+        printf "Mode: EL%d",($psr>>2) & 0x3
+        if ($psr & 0x1)
+            printf "t (SP_EL0)\n"
+        else 
+            printf "h (SP_ELx)\n"
+        end
+    end
+    if ($is_aarch32 ==1)
+        printf "Mode: "
+        set $mode = $psr & 0xf
+        if ($mode == 0x0)
+            printf "User\n"
+        end
+        if ($mode == 0x1)
+            printf "FIQ\n"
+        end
+        if ($mode == 0x2)
+            printf "IRQ\n"
+        end
+        if ($mode == 0x3)
+            printf "Supervisor\n"
+        end
+        if ($mode == 0x6)
+            printf "Monitor\n"
+        end
+        if ($mode == 0x7)
+            printf "Abort\n"
+        end
+        if ($mode == 0xa)
+            printf "Hyper\n"
+        end
+        if ($mode == 0xb)
+            printf "Undefined\n"
+        end
+        if ($mode == 0xf)
+            printf "System\n"
+        end
+    end
+
+    printf "SError Mask: %d\n", ($psr>>8) & 0x1
+    printf "IRQ Mask: %d\n", ($psr>>7) & 0x1
+    printf "FIQ Mask: %d\n", ($psr>>6) & 0x1
+    if ($is_aarch32 !=1)
+        printf "SS: %d    \t//The Software Step bit.\n", ($psr>>21) & 0x1
+        printf "IL: %d    \t//Illegal Execution State bit.\n", ($psr>>20) & 0x1
+        printf "D: %d    \t//Debug exception mask bit.\n", ($psr>>9) & 0x1
+    end
+
+    if ($is_aarch32 == 1)
+        printf "T: %d\n", ($psr>>5) & 0x1
+        printf "E: %d\n", ($psr>>9) & 0x1
+        
+    end
+end
+
+
+define aarch64_get_esr_el3
+    arm_run_one_op 64 0xd53e520f
+    printf "ESR_EL3: 0x%x\n",$arm_run_one_op_result_1
+    aarch64_human_read_esr_elx $arm_run_one_op_result_1
+end
+
+define aarch64_human_read_esr_elx
+    set $esr = $arg0
+
+    printf "EC: 0x%x\n",$esr>>26
+    printf "IL: %d\n",($esr>>25) & 0x1
+    printf "ISS: 0x%x\n",($esr & (~0xFE000000))
+
+end
+
+define aarch64_get_far_el3
+    arm_run_one_op 64 0xd53e600f
+    printf "FAR_EL3: 0x%x\n",$arm_run_one_op_result_1
+
+end
+
+
 define aarch64_get_ttbr0_el1
 
     arm_run_one_op 64 0xd538200f
