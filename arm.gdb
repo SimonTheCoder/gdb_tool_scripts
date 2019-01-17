@@ -244,7 +244,7 @@ define aarch64_page_walk
           set $lv3_pte = *(unsigned long *) ($lv3_page_dir + (( ($va & 0x1fffff) >> 12) * 8))
           set $lv3_pte_type = $lv3_pte & 0x00000003
           printf "lv3 pagetable = 0x%x, pte_ptr = 0x%x ,pte = 0x%llx type=%d(0,1:Invalid,3:Valid)\n",$lv3_page_dir,$lv3_pte_ptr,$lv3_pte,$lv3_pte_type
-          set $pa = ($lv3_pte & 0xfffffffffffff000) + ($va & 0x00000fff)
+          set $pa = ($lv3_pte & 0xfffffffff000) + ($va & 0x00000fff)
           printf "pa = 0x%x\n",$pa
 
       end
