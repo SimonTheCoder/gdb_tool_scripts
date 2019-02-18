@@ -1,3 +1,30 @@
+define aarch64_mmu_off
+    aarch64_get_sctlr_el3
+    $result_sctlr_el3 = $result_sctlr_el3 & (~1)
+    aarch64_set_sctlr_el3 $result_sctrl_el3
+end
+
+define aarch64_mmu_on
+    aarch64_get_sctlr_el3
+    $result_sctlr_el3 = $result_sctlr_el3 | (~1)
+    aarch64_set_sctlr_el3 $result_sctlr_el3
+
+end
+
+define aarch64_get_sctlr_el3
+    arm_run_one_op 64 0xd53e100f
+    set $result_sctlr_el3 = $arm_run_one_op_result_1 
+end
+
+define aarch64_set_sctlr_el3
+    set $reg_value = $arg0
+    set $save_x15 = $x15
+    #   0:	d51e100f 	msr	sctlr_el3, x15
+    arm_run_one_op 64 0xd51e100f
+    set $x15 = $save_x15
+end
+
+
 define arm_human_read_psr
     set $psr = $arg0
     set $is_aarch32 = 0
@@ -187,10 +214,10 @@ define aarch64_page_walk
 #arg0 ttbr_value , &def_ttbl for xvisor
 #arg1 va
     set $va = (unsigned long)$arg1
-    set $page_dir = (unsigned long)$arg0
+    set $page_dir = (unsigned long)$arg0 & 0xFFFFFFFFF000
     printf "page dir=%x, VA=%x\n",$page_dir,$va 
     #lv0 
-    set $lv0_pte_ptr = ($arg0 & 0xFFFFFFFFE000) + (($va >>39)*8) 
+    set $lv0_pte_ptr = ($arg0 & 0xFFFFFFFFF000) + ( ( ($va >>39) & 0x1ff )*8 ) 
     set $lv0_pte = *(unsigned long *) $lv0_pte_ptr
     set $lv0_pte_type = $lv0_pte & 0x3
     printf "lv0 pagetable_dir = 0x%x,  pte_ptr = 0x%x, pte = 0x%llx type=%d(0,1:Invalid,3:Table)\n",$page_dir,$lv0_pte_ptr,$lv0_pte,$lv0_pte_type
@@ -200,7 +227,7 @@ define aarch64_page_walk
 
     end
     set $lv1_page_dir = $lv0_pte & 0xFFFFFFFFF000
-    set $lv1_pte_ptr = (unsigned long *) ($lv1_page_dir + (($va >> 30) * 8))
+    set $lv1_pte_ptr = (unsigned long *) ($lv1_page_dir + ((($va >> 30)&0x1ff) * 8))
     set $lv1_pte =*(unsigned long *) ($lv1_pte_ptr)
     set $lv1_pte_type = $lv1_pte & 0x00000003
     printf "lv1 pagetable_dir = 0x%x,  pte_ptr = 0x%x, pte = 0x%llx type=%d(0:Invalid,1:Block,3:Table)\n",$lv1_page_dir,$lv1_pte_ptr,$lv1_pte,$lv1_pte_type
