@@ -45,27 +45,46 @@ define arm_human_read_psr
         end
     end
     if ($is_aarch32 ==1)
-        printf "Mode: "
+        set $mode_found = 0
+        printf "Mode(0x%x): ",$mode
         set $mode = $psr & 0xf
         if ($mode == 0x0)
             printf "User\n"
-        else if ($mode == 0x1)
+            set $mode_found = 1
+        end
+        if ($mode == 0x1)
             printf "FIQ\n"
-        else if ($mode == 0x2)
+            set $mode_found = 1
+        end
+        if ($mode == 0x2)
             printf "IRQ\n"
-        else if ($mode == 0x3)
+            set $mode_found = 1
+        end
+        if ($mode == 0x3)
             printf "Supervisor\n"
-        else if ($mode == 0x6)
+            set $mode_found = 1
+        end
+        if ($mode == 0x6)
             printf "Monitor\n"
-        else if ($mode == 0x7)
+            set $mode_found = 1
+        end
+        if ($mode == 0x7)
             printf "Abort\n"
-        else if ($mode == 0xa)
+            set $mode_found = 1
+        end
+        if ($mode == 0xa)
             printf "Hyper\n"
-        else if ($mode == 0xb)
+            set $mode_found = 1
+        end
+        if ($mode == 0xb)
             printf "Undefined\n"
-        else if ($mode == 0xf)
+            set $mode_found = 1
+        end
+        if ($mode == 0xf)
             printf "System\n"
-        else
+            set $mode_found = 1
+        end
+        if $mode_found == 0 
             printf "Unknown(0x%x)\n", $mode
         end
     end
