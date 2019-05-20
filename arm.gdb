@@ -172,6 +172,38 @@ define aarch64_human_read_sctlr_elx
 
 end
 
+define aarch32_get_ttbr0
+    #0:	ee125f10 	mrc	15, 0, r5, cr2, cr0, {0} 
+    arm_run_one_op 32 0xee125f10
+    printf "ttbr0: 0x%x\n",$arm_run_one_op_result_1
+end
+define aarch32_get_ttbr1
+    #0:	ee125f30 	mrc	15, 0, r5, cr2, cr0, {1}
+    arm_run_one_op 32 0xee125f30
+    printf "ttbr1: 0x%x\n",$arm_run_one_op_result_1
+end
+define aarch32_get_ttbcr
+    #0:	ee125f50 	mrc	15, 0, r5, cr2, cr0, {2}
+    arm_run_one_op 32 0xee125f50
+    printf "ttbcr: 0x%x\n",$arm_run_one_op_result_1
+end
+
+define aarch32_human_read_ttbrx
+    set $ttbrx = $arg0
+
+    printf "Level1 table: 0x%x\n", $ttbrx & 0xfffff000
+    set $ttbrx_s = $ttbrx & (1<<1) && 1
+    printf "S (Shareable bit): %d\n", $ttbrx_s
+    printf "NOS (Not Outer Shareable bit): "
+    if $ttbrx_s == 0
+        printf "Ignored\n"
+    else
+        printf "%d\n",$ttbrx & (1<<5) && 1
+    end
+
+
+end
+
 ##################################################################
 define arm_run_one_op
      
