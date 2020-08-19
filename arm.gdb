@@ -264,24 +264,40 @@ define aarch64_page_walk
 #need page table 1:1 mapped, granule size is 4KB
 #arg0 ttbr_value , &def_ttbl for xvisor
 #arg1 va
+#arg2 which level to init walking from.
+
+    set $init_form_lv1 = $arg2
     set $va = (unsigned long)$arg1
     set $page_dir = (unsigned long)$arg0 & 0xFFFFFFFFF000
-    printf "page dir=%x, VA=%x\n",$page_dir,$va 
+    printf "page dir=%lx, VA=%lx\n",$page_dir,$va 
+    set $SIMON_QEMU_LOADED= $SIMON_QEMU_LOADED && $SIMON_QEMU_LOADED
     #lv0 
     set $lv0_pte_ptr = ($arg0 & 0xFFFFFFFFF000) + ( ( ($va >>39) & 0x1ff )*8 ) 
-    set $lv0_pte = *(unsigned long *) $lv0_pte_ptr
+    if $SIMON_QEMU_LOADED == 1
+        get_phy_value $lv0_pte_ptr
+        set $lv0_pte = $_SIMON_QEMU_PHY_VALUE
+    else
+        set $lv0_pte = *(unsigned long *) $lv0_pte_ptr
+    end
     set $lv0_pte_type = $lv0_pte & 0x3
-    printf "lv0 pagetable_dir = 0x%x,  pte_ptr = 0x%x, pte = 0x%llx type=%d(0,1:Invalid,3:Table)\n",$page_dir,$lv0_pte_ptr,$lv0_pte,$lv0_pte_type
-    if($lv0_pte_type != 3)
-        printf "Bad page dir gaven!!!\n"
-        printf "%d\n",__GDB_EXCEPTION_RISE
-
+    printf "lv0 pagetable_dir = 0x%lx,  pte_ptr = 0x%lx, pte = 0x%lx type=%d(0,1:Invalid,3:Table)\n",$page_dir,$lv0_pte_ptr,$lv0_pte,$lv0_pte_type
+    if($lv0_pte_type != 3 || $init_form_lv1==1)
+        #printf "Bad page dir gaven!!!\n"
+        #printf "%d\n",__GDB_EXCEPTION_RISE
+        printf "Try init walk from level 1 table.\n"
+        set $lv0_pte = $arg0
     end
     set $lv1_page_dir = $lv0_pte & 0xFFFFFFFFF000
     set $lv1_pte_ptr = (unsigned long *) ($lv1_page_dir + ((($va >> 30)&0x1ff) * 8))
-    set $lv1_pte =*(unsigned long *) ($lv1_pte_ptr)
+
+    if $SIMON_QEMU_LOADED == 1
+        get_phy_value $lv1_pte_ptr
+        set $lv1_pte = $_SIMON_QEMU_PHY_VALUE
+    else
+        set $lv1_pte =*(unsigned long *) ($lv1_pte_ptr)
+    end
     set $lv1_pte_type = $lv1_pte & 0x00000003
-    printf "lv1 pagetable_dir = 0x%x,  pte_ptr = 0x%x, pte = 0x%llx type=%d(0:Invalid,1:Block,3:Table)\n",$lv1_page_dir,$lv1_pte_ptr,$lv1_pte,$lv1_pte_type
+    printf "lv1 pagetable_dir = 0x%lx,  pte_ptr = 0x%lx, pte = 0x%llx type=%d(0:Invalid,1:Block,3:Table)\n",$lv1_page_dir,$lv1_pte_ptr,$lv1_pte,$lv1_pte_type
 
     if($lv1_pte_type == 0)
         #Block
@@ -298,7 +314,13 @@ define aarch64_page_walk
        #lv2 walk
        set $lv2_page_dir = $lv1_pte & 0xfffffffff000
        set $lv2_pte_ptr = (unsigned long *) ($lv2_page_dir + (( ($va & 0x3fffffff) >> 21) * 8))
-       set $lv2_pte = *(unsigned long *) ($lv2_page_dir + (( ($va & 0x3fffffff) >> 21) * 8))
+
+       if $SIMON_QEMU_LOADED == 1
+           get_phy_value $lv2_pte_ptr
+           set $lv2_pte = $_SIMON_QEMU_PHY_VALUE
+       else
+           set $lv2_pte = *(unsigned long *) $lv2_pte_ptr 
+       end
        set $lv2_pte_type = $lv2_pte & 0x00000003
        printf "lv2 pagetable = 0x%x, pte_ptr = 0x%x ,pte = 0x%llx type=%d(0:Invalid,1:Block,3:Table)\n",$lv2_page_dir,$lv2_pte_ptr,$lv2_pte,$lv2_pte_type
        if($lv2_pte_type == 0)
@@ -319,7 +341,12 @@ define aarch64_page_walk
 
           set $lv3_page_dir = $lv2_pte & 0xfffffffff000
           set $lv3_pte_ptr = (unsigned long *) ($lv3_page_dir + (( ($va & 0x1fffff) >> 12) * 8))
-          set $lv3_pte = *(unsigned long *) ($lv3_page_dir + (( ($va & 0x1fffff) >> 12) * 8))
+          if $SIMON_QEMU_LOADED == 1
+              get_phy_value $lv3_pte_ptr 
+              set $lv3_pte = $_SIMON_QEMU_PHY_VALUE
+          else
+              set $lv3_pte = *(unsigned long *) $lv3_pte_ptr 
+          end
           set $lv3_pte_type = $lv3_pte & 0x00000003
           printf "lv3 pagetable = 0x%x, pte_ptr = 0x%x ,pte = 0x%llx type=%d(0,1:Invalid,3:Valid)\n",$lv3_page_dir,$lv3_pte_ptr,$lv3_pte,$lv3_pte_type
           set $pa = ($lv3_pte & 0xfffffffff000) + ($va & 0x00000fff)
@@ -332,4 +359,7 @@ end
 document  aarch64_page_walk
 arg0 ttbr_value , &def_ttbl for xvisor
 arg1 va
+arg2 init walking table level , 0 or 1
+
+If target is QEMU, with qemu.gdb , this command can read phy Addr.
 end
