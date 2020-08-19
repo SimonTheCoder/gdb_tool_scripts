@@ -26,13 +26,21 @@ end
 python
 import gdb
 
-def get_phy_value():
-    addr = gdb.convenience_variable("_SIMON_QEMU_PHY_ADDR")
-    raw_phy_get = gdb.execute("monitor xp /x 0x%x" % (addr),True,True)
-    #print(raw_phy_get)
-    value = int(raw_phy_get.split(":")[1],16)
-    gdb.set_convenience_variable("_SIMON_QEMU_PHY_VALUE",value)
-    #print("addr:%x    value:%x"%(addr,value))
+
+class Dump_phy_value (gdb.Function):
+    """get value from phy addr
+    param: addr, phy addr
+    """
+    def __init__ (self):
+        super (Dump_phy_value, self).__init__ ("dpa")
+
+    def invoke (self, addr):
+        raw_phy_get = gdb.execute("monitor xp /x 0x%x" % (addr),True,True)
+        #print(raw_phy_get)
+        value = int(raw_phy_get.split(":")[1],16)
+        return value
+Dump_phy_value()
+
 end
 define get_phy_value
     set $addr = $arg0

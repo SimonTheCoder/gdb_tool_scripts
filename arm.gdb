@@ -274,8 +274,7 @@ define aarch64_page_walk
     #lv0 
     set $lv0_pte_ptr = ($arg0 & 0xFFFFFFFFF000) + ( ( ($va >>39) & 0x1ff )*8 ) 
     if $SIMON_QEMU_LOADED == 1
-        get_phy_value $lv0_pte_ptr
-        set $lv0_pte = $_SIMON_QEMU_PHY_VALUE
+        set $lv0_pte = $dpa($lv0_pte_ptr)
     else
         set $lv0_pte = *(unsigned long *) $lv0_pte_ptr
     end
@@ -291,8 +290,7 @@ define aarch64_page_walk
     set $lv1_pte_ptr = (unsigned long *) ($lv1_page_dir + ((($va >> 30)&0x1ff) * 8))
 
     if $SIMON_QEMU_LOADED == 1
-        get_phy_value $lv1_pte_ptr
-        set $lv1_pte = $_SIMON_QEMU_PHY_VALUE
+        set $lv1_pte = $dpa($lv1_pte_ptr)
     else
         set $lv1_pte =*(unsigned long *) ($lv1_pte_ptr)
     end
@@ -316,8 +314,7 @@ define aarch64_page_walk
        set $lv2_pte_ptr = (unsigned long *) ($lv2_page_dir + (( ($va & 0x3fffffff) >> 21) * 8))
 
        if $SIMON_QEMU_LOADED == 1
-           get_phy_value $lv2_pte_ptr
-           set $lv2_pte = $_SIMON_QEMU_PHY_VALUE
+           set $lv2_pte = $dpa($lv2_pte_ptr)
        else
            set $lv2_pte = *(unsigned long *) $lv2_pte_ptr 
        end
@@ -342,8 +339,7 @@ define aarch64_page_walk
           set $lv3_page_dir = $lv2_pte & 0xfffffffff000
           set $lv3_pte_ptr = (unsigned long *) ($lv3_page_dir + (( ($va & 0x1fffff) >> 12) * 8))
           if $SIMON_QEMU_LOADED == 1
-              get_phy_value $lv3_pte_ptr 
-              set $lv3_pte = $_SIMON_QEMU_PHY_VALUE
+              set $lv3_pte = $dpa($lv3_pte_ptr)
           else
               set $lv3_pte = *(unsigned long *) $lv3_pte_ptr 
           end
