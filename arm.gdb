@@ -172,6 +172,30 @@ define aarch64_human_read_sctlr_elx
 
 end
 
+python
+import gdb
+class AARCH64_asm(gdb.Function):
+    """assemble aarch64 instructions
+    param: instruction, string
+    """
+    def __init__ (self):
+        super (AARCH64_asm, self).__init__ ("aarch64_asm")
+
+    def invoke (self, ins):
+        #print("Instruction: %s" % ins)
+        command = """echo %s | aarch64-linux-gnu-as -o /tmp/simon_asm.elf && aarch64-linux-gnu-objdump -d /tmp/simon_asm.elf|grep '0:'|awk '{print $2}'"""
+        import subprocess
+        raw_code = subprocess.check_output(command % (ins), shell=True)
+        code = int(raw_code,16)
+        #print("Code:        0x%x" % (code))
+        return code 
+aarch64_asm = AARCH64_asm()        
+end
+
+define aarch64_asm
+    printf "assemble: 0x%x\n",$aarch64_asm($arg0)
+end
+
 define aarch32_get_ttbr0
     #0:	ee125f10 	mrc	15, 0, r5, cr2, cr0, {0} 
     arm_run_one_op 32 0xee125f10
