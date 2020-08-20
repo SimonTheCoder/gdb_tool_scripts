@@ -26,6 +26,23 @@ end
 python
 import gdb
 
+class VA_to_PA (gdb.Function):
+    """get value from phy addr
+    param: addr, phy addr
+    """
+    def __init__ (self):
+        super (VA_to_PA, self).__init__ ("va2pa")
+
+    def invoke (self, addr):
+        raw_phy_get = gdb.execute("monitor gva2gpa 0x%x" % (addr),True,True)
+        #print(raw_phy_get)
+
+        pa_info = raw_phy_get.split(":")
+        if len(pa_info) != 2:
+            print("ERROR: 0x%lx is not mapped!\n" % addr)
+            return -1
+        return int(pa_info[1],16) 
+VA_to_PA()
 
 class Dump_phy_value (gdb.Function):
     """get value from phy addr

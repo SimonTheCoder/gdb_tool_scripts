@@ -162,6 +162,30 @@ define aarch64_get_sctlr_el1
 
 end
 
+define aarch64_va2pa
+    set $temp_save_reg = $x15
+    set $va = $arg1
+    set $x15 = $va
+    set $op_code = $aarch64_at_ins($arg0, "x15")
+    arm_run_one_op 64 $op_code
+    set $x15 = $temp_save_reg
+    set $PAR = (unsigned long)$PAR_EL1
+
+    if(($PAR & 0x1) == 0)
+        printf "PAR_EL1: %lx\n",$PAR_EL1
+        set $page_addr = $PAR & (((unsigned long)1<<48)-1) & ((-1UL)<<12) 
+        printf "Page paddr:%lx\n",$page_addr
+        printf "Paddr: %lx\n",($page_addr + ((unsigned long)$va & 0xfff))    
+
+    else
+        printf "Translation Failed.\n"
+    end
+end
+document aarch64_va2pa
+    arg0: AT instruction tag. e.g.:"S1E1W"
+    arg1: VA
+end
+
 define aarch64_human_read_sctlr_elx
     set $reg_vale = $arg0
 
@@ -189,7 +213,15 @@ class AARCH64_asm(gdb.Function):
         code = int(raw_code,16)
         #print("Code:        0x%x" % (code))
         return code 
-aarch64_asm = AARCH64_asm()        
+aarch64_asm = AARCH64_asm()
+
+class AARCH64_AT_instruction(gdb.Function):
+    def __init__(self):
+        super (AARCH64_AT_instruction, self).__init__("aarch64_at_ins")
+
+    def invoke (self, tag, reg):
+        return aarch64_asm.invoke("AT %s,%s" % (tag,reg))
+AARCH64_AT_instruction()
 end
 
 define aarch64_asm
